@@ -304,8 +304,10 @@ const struct dpll_params *get_dpll_mpu_params(void)
 	if (bone_not_connected_to_ac_power())
 		freq = MPUPLL_M_600;
 
-	if (board_is_pb() || board_is_bone_lt())
+	if (board_is_pb() /*|| board_is_bone_lt()*/)
 		freq = MPUPLL_M_1000;
+	if (board_is_bone_lt())
+		freq = MPUPLL_M_600;
 
 	switch (freq) {
 	case MPUPLL_M_1000:
@@ -350,8 +352,10 @@ static void scale_vcores_bone(int freq)
 	 * Override what we have detected since we know if we have
 	 * a Beaglebone Black it supports 1GHz.
 	 */
-	if (board_is_pb() || board_is_bone_lt())
+	if (board_is_pb() /*|| board_is_bone_lt()*/)
 		freq = MPUPLL_M_1000;
+	if (board_is_bone_lt())
+		freq = MPUPLL_M_600;
 
 	switch (freq) {
 	case MPUPLL_M_1000:
@@ -698,6 +702,31 @@ static bool __maybe_unused prueth_is_mii = true;
  */
 int board_init(void)
 {
+    u32 sys_reboot, sys_rtc_osc;
+
+    sys_reboot = readl(PRM_RSTST);
+    if (sys_reboot & (1 << 9))
+        puts("Reset Source: IcePick reset has occurred.\n");
+
+    if (sys_reboot & (1 << 5))
+        puts("Reset Source: Global external warm reset has occurred.\n");
+
+    if (sys_reboot & (1 << 4))
+        puts("Reset Source: watchdog reset has occurred.\n");
+
+    if (sys_reboot & (1 << 1))
+        puts("Reset Source: Global warm SW reset has occurred.\n");
+
+    if (sys_reboot & (1 << 0))
+        puts("Reset Source: Power-on reset has occurred.\n");
+
+    sys_rtc_osc = readl(RTC_OSC);
+    if (sys_rtc_osc & (1 << 3)) {
+        puts("RTC 32KCLK Source: External.\n");
+    } else {
+        puts("RTC 32KCLK Source: Internal.\n");
+    }
+
 #if defined(CONFIG_HW_WATCHDOG)
 	hw_watchdog_init();
 #endif
