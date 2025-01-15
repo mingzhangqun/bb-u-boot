@@ -40,6 +40,16 @@
 #define NANDARGS ""
 #endif
 
+#define BOOTENV_DEV_LEGACY_MMC(devtypeu, devtypel, instance) \
+	"bootcmd_" #devtypel #instance "=" \
+	"setenv devtype mmc; " \
+	"setenv mmcdev " #instance"; "\
+	"setenv bootpart " #instance":1 ; "\
+	"run boot\0"
+
+#define BOOTENV_DEV_NAME_LEGACY_MMC(devtypeu, devtypel, instance) \
+	#devtypel #instance " "
+
 #define BOOTENV_DEV_NAND(devtypeu, devtypel, instance) \
 	"bootcmd_" #devtypel "=" \
 	"run nandboot\0"
@@ -66,23 +76,28 @@
 #endif
 
 #define BOOT_TARGET_DEVICES(func) \
+	func(LEGACY_MMC, legacy_mmc, 0) \
 	func(MMC, mmc, 0) \
+	func(LEGACY_MMC, legacy_mmc, 1) \
 	func(MMC, mmc, 1) \
-	func(NAND, nand, 0) \
 	BOOT_TARGET_USB(func) \
-	BOOT_TARGET_PXE(func) \
-	BOOT_TARGET_DHCP(func)
 
 #include <config_distro_bootcmd.h>
 
 #ifndef CONFIG_XPL_BUILD
 #include <env/ti/dfu.h>
+#include <env/ti/mmc.h>
+#include <env/ti/wiki_boot.h>
 
 #define CFG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
+	DEFAULT_MMC_TI_ARGS \
+	"bootpart=0:1\0" \
+	"bootdir=/boot\0" \
+	"bootfile=zImage\0" \
+	"board_eeprom_header=undefined\0" \
 	"fdtfile=undefined\0" \
-	"finduuid=part uuid mmc 0:2 uuid\0" \
-	"console=ttyO0,115200n8\0" \
+	"console=ttyS0,115200n8\0" \
 	"partitions=" \
 		"uuid_disk=${uuid_gpt_disk};" \
 		"name=bootloader,start=384K,size=1792K," \
@@ -147,10 +162,13 @@
 			"echo WARNING: Could not determine device tree to use; fi; \0" \
 	"init_console=" \
 		"if test $board_name = A335_ICE; then "\
-			"setenv console ttyO3,115200n8;" \
+			"setenv console ttyS3,115200n8;" \
 		"else " \
-			"setenv console ttyO0,115200n8;" \
+			"setenv console ttyS0,115200n8;" \
 		"fi;\0" \
+	EEWIKI_BOOT \
+	EEWIKI_UNAME_BOOT \
+	EEPROM_PROGRAMMING \
 	NANDARGS \
 	NETARGS \
 	DFUARGS \
