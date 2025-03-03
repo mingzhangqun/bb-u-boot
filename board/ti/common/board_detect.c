@@ -200,6 +200,12 @@ static int __maybe_unused ti_i2c_eeprom_get(int bus_addr, int dev_addr,
 	return 0;
 }
 
+static const uint8_t bbb_eeprom[] = {
+	0xaa, 0x55, 0x33, 0xee, 0x41, 0x33, 0x33, 0x35,
+	0x42, 0x4e, 0x4c, 0x54, 0x30, 0x30, 0x43, 0x30,
+	0x32, 0x30, 0x32, 0x35, 0x53, 0x42, 0x42, 0x30,
+	0x30, 0x30, 0x31, 0x39, 0xff, 0xff, 0xff, 0xff,
+};
 int __maybe_unused ti_emmc_boardid_get(void)
 {
 	int rc;
@@ -211,6 +217,7 @@ int __maybe_unused ti_emmc_boardid_get(void)
 	uchar *buffer;
 
 	ep = TI_EEPROM_DATA;
+	memcpy(ep, bbb_eeprom, sizeof(bbb_eeprom));
 	if (ep->header == TI_EEPROM_HEADER_MAGIC)
 		return 0;       /* EEPROM has already been read */
 
@@ -316,10 +323,11 @@ int __maybe_unused ti_i2c_eeprom_am_get(int bus_addr, int dev_addr)
 	ep->serial[0] = 0x0;
 	ep->config[0] = 0x0;
 
-	rc = ti_i2c_eeprom_get(bus_addr, dev_addr, TI_EEPROM_HEADER_MAGIC,
-			       sizeof(am_ep), (uint8_t *)&am_ep);
-	if (rc)
-		return rc;
+	// rc = ti_i2c_eeprom_get(bus_addr, dev_addr, TI_EEPROM_HEADER_MAGIC,
+	// 		       sizeof(am_ep), (uint8_t *)&am_ep);
+	// if (rc)
+	// 	return rc;
+	memcpy(&am_ep, bbb_eeprom, sizeof(bbb_eeprom));
 
 	ep->header = am_ep.header;
 	strlcpy(ep->name, am_ep.name, TI_EEPROM_HDR_NAME_LEN + 1);
